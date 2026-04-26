@@ -55,7 +55,7 @@ After=network.target
 [Service]
 Type=simple
 Restart=always
-ExecStart=${TARGET_DIR}/bin/code-server --bind-addr 0.0.0.0:8080 --auth password
+ExecStart=${TARGET_DIR}/bin/code-server --config /var/apps/coder/shares/data/config.yaml --bind-addr 0.0.0.0:8080 --auth password
 User=${CURRENT_USER}
 Group=1001
 [Install]
@@ -63,7 +63,8 @@ WantedBy=multi-user.target
 EOF
  
 # 启动服务
-systemctl --user enable --now code-server
+sudo systemctl restart code-server
+sudo systemctl enable code-server
 
 log_msg "------------------------------------------------"
 log_msg "安装成功！"
