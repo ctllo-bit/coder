@@ -47,6 +47,7 @@ fi
 log_msg "正在移动文件到 $TARGET_DIR..."
 sudo mv "/tmp/code-server-${LATEST_VERSION}-linux-amd64" "$TARGET_DIR"
 
+REQUEST_IP=$(hostname -I | awk '{print $1}')
 log_msg "配置 Systemd 服务..."
 sudo tee "/etc/systemd/system/code-server.service" > /dev/null <<EOF
 [Unit]
@@ -55,7 +56,7 @@ After=network.target
 [Service]
 Type=simple
 Restart=always
-ExecStart=${TARGET_DIR}/bin/code-server --config /var/apps/coder/shares/data/config.yaml --bind-addr 0.0.0.0:8080 --auth password
+ExecStart=${TARGET_DIR}/bin/code-server --config /var/apps/coder/shares/data/config.yaml --bind-addr ${REQUEST_IP}:8080 --auth password
 User=${CURRENT_USER}
 Group=1001
 [Install]
