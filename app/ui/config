@@ -1,12 +1,12 @@
 {
     ".url": {
         "coder.Application": {
-            "title": "{display_name}",
+            "title": "coder",
             "icon": "images/icon_{0}.png",
             "type": "url",
             "protocol": "http",
-            "port": "{port}",
-            "url": "/{url-path}",
+            "port": "8080",
+            "url": "/",
             "allUsers": false
         }
     }

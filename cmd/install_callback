@@ -7,10 +7,14 @@ Description=code-server
 After=network.target
 [Service]
 Type=simple
-Restart=always
-ExecStart=/opt/code-server/bin/code-server --config /var/apps/coder/shares/data/config.yaml --bind-addr ${REQUEST_IP}:8080 --auth password
 User=1000
 Group=1001
+ExecStart=/opt/code-server/bin/code-server \
+    --config /var/apps/coder/shares/data/config.yaml \
+    --user-data-dir /var/apps/coder/var/data \
+    --bind-addr ${REQUEST_IP}:8080 --auth password
+
+Restart=always
 [Install]
 WantedBy=multi-user.target
 EOF
