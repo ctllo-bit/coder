@@ -1,5 +1,39 @@
 #!/bin/bash
+LOG_FILE="${TRIM_PKGVAR}/info.log"
 
-### This script is called after the user uninstalls the application.
+### This script is called after the user installs the application.
+log_msg() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> ${LOG_FILE}
+}
+
+log_msg "开始卸载 code-server..."
+
+if systemctl is-enabled --quiet code-server; then
+    log_msg "禁用 code-server 服务..."
+    sudo systemctl disable code-server
+fi
+
+# 移除 Systemd 服务文件
+if [ -f "/etc/systemd/system/code-server.service" ]; then
+    log_msg "移除服务配置文件..."
+    sudo rm /etc/systemd/system/code-server.service
+    sudo systemctl daemon-reload
+fi
+
+# 移除二进制软链接
+if [ -L "/usr/local/bin/code" ]; then
+    log_msg "移除二进制软链接 /usr/local/bin/code..."
+    sudo rm /usr/local/bin/code
+fi
+
+
+# 删除安装目录
+TARGET_DIR="/opt/code-server"
+if [ -d "$TARGET_DIR" ]; then
+    log_msg "删除安装目录 $TARGET_DIR..."
+    sudo rm -rf "$TARGET_DIR"
+fi
+
+log_msg "code-server 卸载完成。"
 
 exit 0

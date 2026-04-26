@@ -55,9 +55,7 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 EOF
- 
-# 启动服务
-sudo systemctl restart code-server
+
 sudo systemctl enable code-server
 
 exit 0
