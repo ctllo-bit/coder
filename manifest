@@ -1,6 +1,6 @@
 appname               = coder
 version               = 1.0.0
-display_name          = display-name
+display_name          = coder
 desc                  = app-description
 arch                  = x86_64
 source                = thirdparty

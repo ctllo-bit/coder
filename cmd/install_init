@@ -46,5 +46,6 @@ fi
 
 log_msg "正在移动文件到 $TARGET_DIR..."
 sudo mv "/tmp/code-server-${LATEST_VERSION}-linux-amd64" "$TARGET_DIR"
+sudo ln -s /opt/code-server/bin/code-server /usr/local/bin/code
 
 exit 0
