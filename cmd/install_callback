@@ -1,6 +1,45 @@
 #!/bin/bash
-REQUEST_IP=$(hostname -I | awk '{print $1}')
+LOG_FILE="${TRIM_PKGVAR}/info.log"
 
+### This script is called after the user installs the application.
+log_msg() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> ${LOG_FILE}
+}
+
+log_msg "正在获取最新版本信息..."
+LATEST_VERSION=$(curl -s https://api.github.com/repos/coder/code-server/releases/latest | grep -Po '"tag_name": "v\K[^"]*')
+if [ -z "$LATEST_VERSION" ]; then
+    log_msg "获取版本失败，请检查网络。"
+    exit 1
+fi
+log_msg "最新版本: $LATEST_VERSION"
+
+cd /tmp
+DICT_FILE="code-server-${LATEST_VERSION}-linux-amd64.tar.gz"
+DICT_URL="https://github.com/coder/code-server/releases/download/v${LATEST_VERSION}/${DICT_FILE}"
+
+if [ ! -f "/tmp/$DICT_FILE" ]; then 
+    log_msg "下载最新文件到 /tmp（支持断点续传） "
+    wget -c "$DICT_URL" --show-progress 
+else 
+    log_msg "code-server压缩包已存在: /tmp/$DICT_FILE" 
+fi
+
+log_msg "正在解压文件..."
+tar -xzf "/tmp/$DICT_FILE" -C /tmp
+
+
+TARGET_DIR="/opt/code-server"
+if [ -d "$TARGET_DIR" ]; then
+    log_msg "检测到旧的 code-server，正在更新..."
+    sudo rm -rf "$TARGET_DIR"
+fi
+
+log_msg "正在移动文件到 $TARGET_DIR..."
+sudo mv "/tmp/code-server-${LATEST_VERSION}-linux-amd64" "$TARGET_DIR"
+sudo ln -s /opt/code-server/bin/code-server /usr/local/bin/code
+
+REQUEST_IP=$(hostname -I | awk '{print $1}')
 sudo tee "/etc/systemd/system/code-server.service" > /dev/null <<EOF
 [Unit]
 Description=code-server
@@ -9,9 +48,7 @@ After=network.target
 Type=simple
 User=1000
 Group=1001
-ExecStart=/opt/code-server/bin/code-server \
-    --config /var/apps/coder/shares/data/config.yaml \
-    --user-data-dir /var/apps/coder/var/data \
+ExecStart=/opt/code-server/bin/code-server --config /var/apps/coder/shares/data/config.yaml --user-data-dir /var/apps/coder/var/data \
     --bind-addr ${REQUEST_IP}:8080 --auth password
 
 Restart=always
