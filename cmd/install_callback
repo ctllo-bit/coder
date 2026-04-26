@@ -46,17 +46,30 @@ fi
 
 log_msg "正在移动文件到 $TARGET_DIR..."
 sudo mv "/tmp/code-server-${LATEST_VERSION}-linux-amd64" "$TARGET_DIR"
-sudo chown -R $CURRENT_USER:1001 "$TARGET_DIR"
-chmod -R 755 "$TARGET_DIR"    
 
+log_msg "配置 Systemd 服务..."
+sudo tee "/etc/systemd/system/code-server.service" > /dev/null <<EOF
+[Unit]
+Description=code-server
+After=network.target
+[Service]
+Type=simple
+Restart=always
+ExecStart=${TARGET_DIR}/bin/code-server --bind-addr 0.0.0.0:8080 --auth password
+User=${CURRENT_USER}
+Group=1001
+[Install]
+WantedBy=multi-user.target
+EOF
+ 
+# 启动服务
+systemctl --user enable --now code-server
 
-
-
-
-
-
-
-
+log_msg "------------------------------------------------"
+log_msg "安装成功！"
+log_msg "访问地址: http://服务器IP:8080"
+log_msg "初始密码请运行: grep 'password:' /home/$CURRENT_USER/.config/code-server/config.yaml"
+log_msg "------------------------------------------------"
 
 ### This script is called after the user installs the application.
 
