@@ -1,0 +1,28 @@
+{
+    "data-share":
+    {
+        "shares":
+        [
+            {
+                "name": "coder",
+                "permission":
+                {
+                    "rw":
+                    [
+                        "coder"
+                    ]
+                }
+            },
+            {
+                "name": "coder/data",
+                "permission":
+                {
+                    "rw":
+                    [
+                        "coder"
+                    ]
+                }
+            }
+        ]
+    }
+}
