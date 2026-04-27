@@ -72,7 +72,7 @@ tar -xzf code-server-*-linux-${ARCH}.tar.gz || {
     log_msg "解压失败"
     exit 1
 }
-# rm code-server-*-linux-${ARCH}.tar.gz
+rm code-server-*-linux-${ARCH}.tar.gz
 
 log_msg "解压完成，正在移动文件到：$INSTALL_TARGETDIR..."
 sudo mv code-server-*-linux-${ARCH} "$INSTALL_TARGETDIR" || {
@@ -81,9 +81,9 @@ sudo mv code-server-*-linux-${ARCH} "$INSTALL_TARGETDIR" || {
 }
 sudo ln -s /opt/code-server/bin/code-server /usr/local/bin/coder
 
-sudo mkdir -p /var/apps/coder/shares/data
+
 # 配置code-server文件
-CONFIG_FILE="/var/apps/coder/shares/data/config.yaml"
+CONFIG_FILE="/var/apps/coder/etc/config.yaml"
 cat > "$CONFIG_FILE" <<EOF
 bind-addr: 0.0.0.0:${wizard_port}
 auth: password
@@ -100,7 +100,7 @@ After=network.target
 Type=simple
 Restart=always
 ExecStart=/opt/code-server/bin/code-server \
-    --config /var/apps/coder/shares/data/config.yaml \
+    --config /var/apps/coder/etc/config.yaml \
     --user-data-dir /var/apps/coder/var/data
 User=1000
 Group=1001
