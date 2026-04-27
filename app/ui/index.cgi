@@ -1,7 +1,8 @@
 #!/bin/sh
 
 # 从配置文件获取的端口
-PORT=$(sed -n 's/bind-addr:.*:\([0-9]*\)/\1/p' /var/apps/coder/shares/data/config.yaml)
+PORT=$(grep -oE ':[0-9]+' /var/apps/coder/shares/data/config.yaml | head -n1 | tr -d :)
+PORT="${PORT:-8080}"
 
 # 添加 HTTP 响应头
 echo "Content-Type: text/html; charset=utf-8"
@@ -46,7 +47,7 @@ cat <<EOF
 
     const protocol= window.location.protocol;
     const hostname=isInternalIp ? host : ('coder.'+ host);
-    const port = isInternalIp ? '${PORT:-8080}' : window.location.port;
+    const port = isInternalIp ? '${PORT}' : window.location.port;
     const airPort=port?(':'+port):'';
 
     // 构建目标URL
