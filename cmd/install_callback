@@ -92,7 +92,7 @@ Restart=always
 ExecStart=/opt/code-server/bin/code-server \
     --config /var/apps/coder/shares/data/config.yaml \
     --user-data-dir /var/apps/coder/var/data \
-    --bind-addr 0.0.0.0:8080 --auth password
+    --bind-addr 0.0.0.0:${wizard_port} --auth password
 User=1000
 Group=1001
 [Install]
