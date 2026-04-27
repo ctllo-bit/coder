@@ -103,6 +103,8 @@ EOF
 sudo systemctl restart code-server
 sudo systemctl enable code-server
 
+sed -i "s|^bind-addr:.*|bind-addr: 0.0.0.0:${wizard_port}|" /var/apps/coder/shares/data/config.yaml
+
 log_msg "code-server 安装完成。"
 
 exit 0
