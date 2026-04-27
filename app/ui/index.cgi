@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# 从配置文件获取的端口
-PORT=$(grep -oE ':[0-9]+' /var/apps/coder/shares/data/config.yaml | head -n1 | tr -d :)
+# 从配置文件获取的端口号
+PORT=$(grep -oE ':[0-9]+' /var/apps/coder/etc/config.yaml | head -n1 | tr -d :)
 PORT="${PORT:-8080}"
 
 # 添加 HTTP 响应头

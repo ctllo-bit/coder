@@ -3,8 +3,8 @@ version               = 1.0.0
 display_name          = coder
 desc                  = `<div>飞牛原生版本，用root适配的coder-server<span>
 
-工作目录：/vol1/1000/coderProject
-本地化安装：在工作目录中上传code-server-*.tar.gz文件，并安装此fpk。
+实现原理是用Systemd 服务，可以本地化终端，由ctllo-bit适配，工作目录为/vol1/1000/coderProject，
+要本地化安装coder-server，则在此目录中上传code-server-*.tar.gz文件，然后安装此fpk。
 
 </span></div>`
 arch                  = all

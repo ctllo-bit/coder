@@ -26,7 +26,6 @@ if [ -L "/usr/local/bin/coder" ]; then
     sudo rm /usr/local/bin/coder
 fi
 
-
 # 删除安装目录
 TARGET_DIR="/opt/code-server"
 if [ -d "$TARGET_DIR" ]; then
