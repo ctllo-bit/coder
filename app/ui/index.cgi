@@ -42,7 +42,7 @@ cat <<EOF
     const isInternalIp = /^(?:10|127|172\.(?:1[6-9]|2\d|3[01])|192\.168|169\.254|100\.64)\./.test(host) || host === 'localhost';
 
     const protocol= window.location.protocol;
-    const hostname=isInternalIp ? host : ('vs-code.'+ host);
+    const hostname=isInternalIp ? host : ('coder.'+ host);
     const port = isInternalIp ? '8080' : window.location.port;
     const airPort=port?(':'+port):'';
 

@@ -1,10 +1,20 @@
 appname               = coder
 version               = 1.0.0
 display_name          = coder
-desc                  = app-description
-arch                  = x86_64
+desc                  = `<div>飞牛原生版本，用root适配的coder-server<span>
+
+安装位置：/opt/code-server
+工作目录：/vol1/1000/coderProject
+配置文件目录：/vol1/@appshare/coder/data/config.yaml
+
+本地化安装：在/vol1/1000目录创建coderProject文件夹，然后上传code-server-*.tar.gz版本。
+
+</span></div>`
+
+arch                  = all
 source                = thirdparty
-maintainer            = your-name
-distributor           = your-name
+maintainer            = coder
+maintainer_url        = https://github.com/coder/code-server
+distributor           = ctllo-bit
 desktop_uidir         = ui
 desktop_applaunchname = coder.Application
