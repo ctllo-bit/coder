@@ -38,17 +38,11 @@ download_latest() {
     local DICT_FILE="code-server-${LATEST_VERSION}-linux-${ARCH}.tar.gz"
     log_msg "最新版本为: $LATEST_VERSION，准备下载: ${DICT_FILE}"
 
-    cd $CODER_WORKSPACEDIR || {
-        log_msg "无法进入 ${CODER_WORKSPACEDIR}"
-        return 1
-    }
-
     local DICT_URL="https://github.com/coder/code-server/releases/download/v${LATEST_VERSION}/${DICT_FILE}"
     wget -c "$DICT_URL" --show-progress || {
         log_msg "下载失败"
         return 1
     }
-
     log_msg "最新版本下载完成: ${CODER_WORKSPACEDIR}/$DICT_FILE"
 
     return 0
@@ -56,6 +50,11 @@ download_latest() {
 
 
 log_msg "开始安装 code-server"
+
+cd $CODER_WORKSPACEDIR || {
+    log_msg "无法进入 ${CODER_WORKSPACEDIR}"
+    exit 1
+}
 
 files=("$CODER_WORKSPACEDIR"/code-server-*-linux-${ARCH}.tar.gz)
 
@@ -69,13 +68,34 @@ else
     }
 fi
 
+log_msg "正在解压文件..."
+tar -xzf code-server-*-linux-${ARCH}.tar.gz || {
+    log_msg "解压失败"
+    exit 1
+}
 
+log_msg "解压完成，正在移动文件到：$INSTALL_TARGETDIR..."
+sudo mv code-server-*-linux-${ARCH} "$INSTALL_TARGETDIR" || {
+    log_msg "移动文件失败"
+    exit 1
+}
 
+REQUEST_IP=$(hostname -I | awk '{print $1}')
+log_msg "正在创建 systemd 服务文件..."
+sudo tee "/etc/systemd/system/code-server.service" > /dev/null <<EOF
+[Unit]
+Description=code-server
+After=network.target
+[Service]
+Type=simple
+User=1000
+Group=1001
+ExecStart=/opt/code-server/bin/code-server --config /var/apps/coder/shares/data/config.yaml --user-data-dir /var/apps/coder/var/data --bind-addr ${REQUEST_IP}:8080
+Restart=always
+[Install]
+WantedBy=multi-user.target
+EOF
 
-# install_code_server || {
-#     log_msg "安装 code-server 失败"
-#     exit 1
-# }
-
+sudo systemctl enable code-server
 
 exit 0
