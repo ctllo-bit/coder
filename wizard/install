@@ -1,0 +1,43 @@
+[
+    {
+        "stepTitle": "安装向导",
+        "items": [
+	        {
+                "type": "tips",
+                "helpText": "若使用自定义端口，请修改下面的服务端口"
+            },
+            {
+                "type": "text",
+                "field": "wizard_port",
+                "label": "服务端口",
+		        "initValue": "58090",
+                "rules": [
+                    {
+                        "required": true,
+                        "message": "请输入端口号"
+                    },
+                    {
+                        "pattern": "^[0-9]+$",
+                        "message": "端口号必须是数字"
+                    }
+                ]
+            },
+             {
+                "type": "text",
+                "field": "wizard_music_path",
+                "label": "音乐目录",
+                "initValue": "/vol1/1000/XiaoMusic",
+                "rules": [
+                    {
+                        "required": true,
+                        "message": "请输入音乐目录路径"
+                    },
+                    {
+                        "pattern": "^(/[^/ ]*)+/?$",
+                        "message": "请输入有效的飞牛路径"
+                    }
+                ]
+            }
+        ]
+    }
+]
