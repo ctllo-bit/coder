@@ -1,110 +1,81 @@
 #!/bin/bash
 LOG_FILE="${TRIM_PKGVAR}/info.log"
-
 INSTALL_TARGETDIR="/opt/code-server"
+CODER_WORKSPACEDIR="/vol1/1000/coderProject"
+
+#获取处理器架构
+ARCH=""
+case "${TRIM_SYS_ARCH}" in
+    x86_64|x86)
+        ARCH="amd64"
+        ;;
+    aarch64|arm)
+        ARCH="arm64"
+        ;;
+    armv7l|armv7)
+        ARCH="armv7l"
+        ;;
+    *)
+        log_msg "不支持的架构: $TRIM_SYS_ARCH"
+        exit 1
+        ;;
+esac
+
 
 ### This script is called after the user installs the application.
 log_msg() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> ${LOG_FILE}
 }
 
-install_code_server_latest() {
-    log_msg "正在获取最新版本信息..."
+download_latest() {
     local LATEST_VERSION
+    log_msg "正在获取最新版本信息..."
     LATEST_VERSION=$(curl -s https://api.github.com/repos/coder/code-server/releases/latest | grep -Po '"tag_name": "v\K[^"]*')
     if [ -z "$LATEST_VERSION" ]; then
         log_msg "获取版本失败，请检查网络。"
         return 1
     fi
-    log_msg "最新版本: $LATEST_VERSION"
+    local DICT_FILE="code-server-${LATEST_VERSION}-linux-${ARCH}.tar.gz"
+    log_msg "最新版本为: $LATEST_VERSION，准备下载: ${DICT_FILE}"
 
-    cd /tmp || {
-        log_msg "无法进入 /tmp"
+    cd $CODER_WORKSPACEDIR || {
+        log_msg "无法进入 ${CODER_WORKSPACEDIR}"
         return 1
     }
-    local DICT_FILE="code-server-${LATEST_VERSION}-linux-amd64.tar.gz"
+
     local DICT_URL="https://github.com/coder/code-server/releases/download/v${LATEST_VERSION}/${DICT_FILE}"
-
-    if [ ! -f "/tmp/$DICT_FILE" ]; then 
-        log_msg "下载最新文件到 /tmp（支持断点续传）"
-        wget -c "$DICT_URL" --show-progress || {
-            log_msg "下载失败"
-            return 1
-        }
-    else 
-        log_msg "code-server压缩包已存在: /tmp/$DICT_FILE" 
-    fi
-
-    log_msg "正在解压文件..."
-    tar -xzf "/tmp/$DICT_FILE" -C /tmp || {
-        log_msg "解压失败"
+    wget -c "$DICT_URL" --show-progress || {
+        log_msg "下载失败"
         return 1
     }
 
-    if [ -d "$INSTALL_TARGETDIR" ]; then
-        log_msg "检测到旧的 code-server，正在更新..."
-        sudo rm -rf "$INSTALL_TARGETDIR" || {
-            log_msg "删除旧版本失败"
-            return 1
-        }
-    fi
+    log_msg "最新版本下载完成: ${CODER_WORKSPACEDIR}/$DICT_FILE"
 
-    log_msg "正在移动文件到 $INSTALL_TARGETDIR..."
-    sudo mv "/tmp/code-server-${LATEST_VERSION}-linux-amd64" "$INSTALL_TARGETDIR" || {
-        log_msg "移动文件失败"
-        return 1
-    }
-
-    log_msg "code-server 安装/更新完成"
+    return 0
 }
 
 
-install_local() {
-    cd ${TRIM_APPDEST}/ || {
-        log_msg "无法进入 ${TRIM_APPDEST}"
-        return 1
+log_msg "开始安装 code-server"
+
+files=("$CODER_WORKSPACEDIR"/code-server-*-linux-${ARCH}.tar.gz)
+
+if [ -e "${files[0]}" ]; then
+    log_msg "发现压缩包: ${files[0]}"
+else
+    log_msg "目录中没有 code-server 压缩包"
+    download_latest || {
+        log_msg "下载最新版本失败"
+        exit 1
     }
-
-    log_msg "正在解压文件..."
-    tar -xzvf code-server-*-linux-amd64.tar.gz || {
-        log_msg "解压失败"
-        return 1
-    }
-    rm code-server-*-linux-amd64.tar.gz
-
-    log_msg "正在移动文件到 $INSTALL_TARGETDIR..."
-    sudo mv code-server-*-linux-amd64 "$INSTALL_TARGETDIR" || {
-        log_msg "移动文件失败"
-        return 1
-    }
-
-    log_msg "code-server 安装/更新完成"
-}
-
-log_msg "开始安装 code-server..."
-
-install_code_server_latest || {
-    log_msg "安装 code-server 失败"
-    exit 1
-}
+fi
 
 
 
-REQUEST_IP=$(hostname -I | awk '{print $1}')
-sudo tee "/etc/systemd/system/code-server.service" > /dev/null <<EOF
-[Unit]
-Description=code-server
-After=network.target
-[Service]
-Type=simple
-User=1000
-Group=1001
-ExecStart=/opt/code-server/bin/code-server --config /var/apps/coder/shares/data/config.yaml --user-data-dir /var/apps/coder/var/data --bind-addr ${REQUEST_IP}:8080
-Restart=always
-[Install]
-WantedBy=multi-user.target
-EOF
 
-sudo systemctl enable code-server
+# install_code_server || {
+#     log_msg "安装 code-server 失败"
+#     exit 1
+# }
+
 
 exit 0

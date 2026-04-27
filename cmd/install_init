@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # 获取 UID 为 1000 的用户名
 CURRENT_USER=$(getent passwd 1000 | cut -d: -f1)
 
@@ -7,5 +6,9 @@ CURRENT_USER=$(getent passwd 1000 | cut -d: -f1)
 sudo mkdir -p "/home/${CURRENT_USER}"
 sudo chown -R $CURRENT_USER:1001 "/home/${CURRENT_USER}"
 chmod -R 755 "/home/${CURRENT_USER}"
+
+#创建工作目录
+sudo mkdir -p "/vol1/1000/coderProject"
+sudo chown -R $CURRENT_USER:1001 "/vol1/1000/coderProject"
 
 exit 0
