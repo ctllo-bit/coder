@@ -64,16 +64,12 @@ cat <<EOF
         //沙盒属性
         iframe.sandbox="allow-same-origin allow-scripts allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-downloads"
         iframe.src =targetURL;
-
-        console.log('✅ 修改iframe成功123！');
     }else{
         //飞牛APP因跨源（cross-origin)获取不了，则直接跳转
         //window.location.href = targetURL;
         window.open(targetURL, '_top');
         window.alert(5 + 6);
     }
-
-    console.log("CGI加载的JS文件成功！");
   </script>
 </body>
 </html>

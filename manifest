@@ -6,11 +6,9 @@ desc                  = `<div>飞牛原生版本，用root适配的coder-server<
 安装位置：/opt/code-server
 工作目录：/vol1/1000/coderProject
 配置文件目录：/vol1/@appshare/coder/data/config.yaml
-
-本地化安装：在/vol1/1000目录创建coderProject文件夹，然后上传code-server-*.tar.gz版本。
+本地化安装：在工作目录中上传code-server-*.tar.gz文件，并安装此fpk。
 
 </span></div>`
-
 arch                  = all
 source                = thirdparty
 maintainer            = coder

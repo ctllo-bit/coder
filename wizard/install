@@ -1,6 +1,30 @@
 [
     {
-        "stepTitle": "安装向导",
+        "stepTitle": "欢迎安装",
+        "items": [
+            {
+                "type": "tips",
+                "helpText": "在开始使用前，请确保您知晓并了解相关开源项目协议及条款。"
+            },
+            {
+                "type": "tips",
+                "helpText": "请访问<a target=\"_blank\" href=\"https://github.com/coder/code-server\">Github项目地址</a> 了解项目信息及开源协议。"
+            },
+            {
+                "type": "switch",
+                "field": "agree_terms",
+                "label": "我已知晓并同意遵守上述开源项目相关协议及服务条款",
+                "rules": [
+                    {
+                        "required": true,
+                        "message": "请勾选《我已知晓并同意遵守上述开源项目相关协议及服务条款》"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "stepTitle": "初始化",
         "items": [
 	        {
                 "type": "tips",
@@ -10,7 +34,7 @@
                 "type": "text",
                 "field": "wizard_port",
                 "label": "服务端口",
-		        "initValue": "58090",
+		        "initValue": "8080",
                 "rules": [
                     {
                         "required": true,
@@ -23,35 +47,21 @@
                 ]
             },
             {
-                "type": "text",
+                "type": "password",
                 "field": "wizard_password",
-                "label": "密码",
-		        "initValue": "c73f8573b36e04302d1f2b53",
+                "label": "访问密码",
                 "rules": [
                     {
                         "required": true,
                         "message": "请输入密码"
                     },
-                    
                     {
-                        "pattern": "^[a-zA-Z0-9_]+$",
-                        "message": "只能包含字母、数字和下划线"
-                    }
-                ]
-            },
-            {
-                "type": "text",
-                "field": "wizard_music_path",
-                "label": "音乐目录",
-                "initValue": "/vol1/1000/XiaoMusic",
-                "rules": [
-                    {
-                        "required": true,
-                        "message": "请输入音乐目录路径"
+                        "min": 6,
+                        "message": "密码长度不能少于6位"
                     },
                     {
-                        "pattern": "^(/[^/ ]*)+/?$",
-                        "message": "请输入有效的飞牛路径"
+                        "pattern": "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d_]+$",
+                        "message": "密码必须包含字母和数字"
                     }
                 ]
             }
