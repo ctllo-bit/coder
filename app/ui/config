@@ -1,7 +1,15 @@
 {
     ".url": {
+        "coder.main": {
+            "title": "coder 桌面版",
+            "icon": "images/icon_{0}.png",
+            "type": "iframe",
+            "protocol": "",
+            "url": "/cgi/ThirdParty/coder/index.cgi/",
+            "allUsers": false
+        },
         "coder.Application": {
-            "title": "coder",
+            "title": "coder 外链版",
             "icon": "images/icon_{0}.png",
             "type": "url",
             "protocol": "http",
