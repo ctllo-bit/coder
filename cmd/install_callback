@@ -81,7 +81,6 @@ sudo mv code-server-*-linux-${ARCH} "$INSTALL_TARGETDIR" || {
     exit 1
 }
 
-REQUEST_IP=$(hostname -I | awk '{print $1}')
 log_msg "正在创建 systemd 服务文件..."
 sudo tee "/etc/systemd/system/code-server.service" > /dev/null <<EOF
 [Unit]
@@ -91,7 +90,11 @@ After=network.target
 Type=simple
 User=1000
 Group=1001
-ExecStart=/opt/code-server/bin/code-server --config /var/apps/coder/shares/data/config.yaml --user-data-dir /var/apps/coder/var/data --bind-addr ${REQUEST_IP}:8080
+ExecStart=/opt/code-server/bin/code-server \
+    --config /var/apps/coder/shares/data/config.yaml \
+    --user-data-dir /var/apps/coder/var/data \
+    --bind-addr 0.0.0.0:8080 --auth password
+
 Restart=always
 [Install]
 WantedBy=multi-user.target
