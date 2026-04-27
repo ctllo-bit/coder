@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # 获取 UID 为 1000 的用户名
 CURRENT_USER=$(getent passwd 1000 | cut -d: -f1)
 

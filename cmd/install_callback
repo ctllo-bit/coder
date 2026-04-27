@@ -96,6 +96,8 @@ Restart=always
 WantedBy=multi-user.target
 EOF
 
+sudo ln -s /opt/code-server/bin/code-server /usr/local/bin/coder
 sudo systemctl enable code-server
+log_msg "code-server 安装完成。"
 
 exit 0

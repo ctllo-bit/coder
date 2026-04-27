@@ -21,9 +21,9 @@ if [ -f "/etc/systemd/system/code-server.service" ]; then
 fi
 
 # 移除二进制软链接
-if [ -L "/usr/local/bin/code" ]; then
-    log_msg "移除二进制软链接 /usr/local/bin/code..."
-    sudo rm /usr/local/bin/code
+if [ -L "/usr/local/bin/coder" ]; then
+    log_msg "移除二进制软链接 /usr/local/bin/coder..."
+    sudo rm /usr/local/bin/coder
 fi
 
 
