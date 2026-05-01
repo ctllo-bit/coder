@@ -1,15 +1,12 @@
 #!/bin/sh
 
-# 从配置文件获取的端口号
 PORT=$(grep -oE ':[0-9]+' /var/apps/coder/etc/config.yaml | head -n1 | tr -d :)
 PORT="${PORT:-8080}"
 
-# 添加 HTTP 响应头
 echo "Content-Type: text/html; charset=utf-8"
 echo ""
 
 cat <<EOF
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -17,32 +14,30 @@ cat <<EOF
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VS Code</title>
     <style>
-        /* 基础尺寸保证 */
         html, body {
-        width: 100%;
-        height: 100%;
-        margin: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
         }
 
-        /* 盒模型统一 */
         html {
-        box-sizing: border-box;
-        }
-        *, *::before, *::after {
-        box-sizing: inherit;
+            box-sizing: border-box;
         }
 
-        /* 只对根容器禁用滚动 */
+        *, *::before, *::after {
+            box-sizing: inherit;
+        }
+
         #app, #root, .container {
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
         }
     </style>
 </head>
 <body>
-  <script>
-    const host = window.location.hostname;     
+    <script>
+    const host = window.location.hostname;
     const isInternalIp = /^(?:10|127|172\.(?:1[6-9]|2\d|3[01])|192\.168|169\.254|100\.64)\./.test(host) || host === 'localhost';
 
     const protocol= window.location.protocol;
@@ -53,25 +48,18 @@ cat <<EOF
     // 构建目标URL
     const targetURL =protocol + "//" + hostname + airPort;
 
-    // 尝试获取当前父级 iframe 元素
     let iframe = window.frameElement;
     if(iframe){
         iframe.frameBorder = "0";
         iframe.setAttribute("webkitallowfullscreen", "true");
         iframe.setAttribute("mozallowfullscreen", "true");
         iframe.setAttribute('allow', 'clipboard-read; clipboard-write');
-
-        //沙盒属性
-        iframe.sandbox="allow-same-origin allow-scripts allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-downloads"
+        iframe.setAttribute("sandbox","allow-same-origin allow-scripts allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-downloads");
         iframe.src =targetURL;
     }else{
-        //飞牛APP因跨源（cross-origin)获取不了，则直接跳转
-        //window.location.href = targetURL;
-        window.open(targetURL, '_top');
-        window.alert(5 + 6);
+        window.location.href = targetURL;
     }
-  </script>
+    </script>
 </body>
 </html>
-
 EOF
