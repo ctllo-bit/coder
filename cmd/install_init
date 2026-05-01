@@ -7,11 +7,11 @@ if [ -z "${CURRENT_USER}" ]; then
 fi
 
 HOME_DIR="/home/${CURRENT_USER}"
-WORKSPACE_DIR="/vol1/1000/coderProject"
-
+WORKSPACE_DIR="/vol1/1000/VscodeProject"
 
 sudo mkdir -p "${HOME_DIR}" "${WORKSPACE_DIR}"
-sudo chown -R "${CURRENT_USER}:1001" "${HOME_DIR}" "${WORKSPACE_DIR}"
-sudo chmod 755 "${HOME_DIR}"
+sudo ln -sfn "${WORKSPACE_DIR}" "${HOME_DIR}/project"
+sudo chown -R "${CURRENT_USER}:Users" "${HOME_DIR}" "${WORKSPACE_DIR}"
+sudo chmod 700 "${HOME_DIR}"
 
 exit 0
