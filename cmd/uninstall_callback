@@ -33,6 +33,13 @@ if [ -d "$TARGET_DIR" ]; then
     sudo rm -rf "$TARGET_DIR"
 fi
 
+# 删除工作区软链接
+CURRENT_USER=$(getent passwd 1000 | cut -d: -f1)
+if [ -L "/home/${CURRENT_USER}/project" ]; then
+    log_msg "删除工作区软链接 /home/${CURRENT_USER}/project..."
+    sudo rm "/home/${CURRENT_USER}/project"
+fi
+
 log_msg "code-server 卸载完成。"
 
 exit 0

@@ -72,7 +72,7 @@ tar -xzf code-server-*-linux-${ARCH}.tar.gz || {
     log_msg "解压失败"
     exit 1
 }
-# rm code-server-*-linux-${ARCH}.tar.gz
+rm code-server-*-linux-${ARCH}.tar.gz
 
 log_msg "解压完成，正在移动文件到：$INSTALL_TARGETDIR..."
 sudo mv code-server-*-linux-${ARCH} "$INSTALL_TARGETDIR" || {
@@ -101,7 +101,7 @@ Type=simple
 Restart=always
 ExecStart=/opt/code-server/bin/code-server \
     --config /var/apps/coder/etc/config.yaml \
-    --user-data-dir /var/apps/coder/var/data
+    --user-data-dir /var/apps/coder/var/data ${HOME}/project
 User=1000
 Group=1001
 [Install]
