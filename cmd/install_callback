@@ -26,6 +26,30 @@ log_msg() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> ${LOG_FILE}
 }
 
+patch_product_json() {
+    if ! command -v jq >/dev/null 2>&1; then
+        log_msg "jq 未安装，请先安装 jq"
+        return 1
+    fi
+
+    local FILE_PATH="${CODER_WORKSPACEDIR}/code-server/lib/vscode/product.json"
+    jq '
+        .linkProtectionTrustedDomains = [
+        "https://open-vsx.org",
+        "https://marketplace.visualstudio.com"
+        ]
+        |
+        .extensionsGallery = {
+        "serviceUrl": "https://marketplace.visualstudio.com/_apis/public/gallery",
+        "cacheUrl": "https://vscode.blob.core.windows.net/gallery/index",
+        "itemUrl": "https://marketplace.visualstudio.com/items",
+        "controlUrl": "",
+        "recommendationsUrl": ""
+        }
+    ' "$FILE_PATH" > /tmp/product.json.tmp && \
+    mv /tmp/product.json.tmp "$FILE_PATH"
+}
+
 download_latest() {
     local LATEST_VERSION
     log_msg "正在获取最新版本信息..."
@@ -72,10 +96,12 @@ tar -xzf code-server-*-linux-${ARCH}.tar.gz || {
     log_msg "解压失败"
     exit 1
 }
+mv code-server-*-linux-${ARCH} code-server 
+patch_product_json
 rm code-server-*-linux-${ARCH}.tar.gz
 
 log_msg "解压完成，正在移动文件到：$INSTALL_TARGETDIR..."
-sudo mv code-server-*-linux-${ARCH} "$INSTALL_TARGETDIR" || {
+sudo mv code-server "$INSTALL_TARGETDIR" || {
     log_msg "移动文件失败"
     exit 1
 }
@@ -92,6 +118,7 @@ cert: false
 EOF
 
 log_msg "正在创建 systemd 服务文件..."
+CURRENT_USER=$(getent passwd 1000 | cut -d: -f1)
 sudo tee "/etc/systemd/system/code-server.service" > /dev/null <<EOF
 [Unit]
 Description=code-server
@@ -101,7 +128,7 @@ Type=simple
 Restart=always
 ExecStart=/opt/code-server/bin/code-server \
     --config /var/apps/coder/etc/config.yaml \
-    --user-data-dir /var/apps/coder/var/data ${HOME}/project
+    --user-data-dir /var/apps/coder/var/data /home/${CURRENT_USER}/project
 User=1000
 Group=1001
 [Install]
