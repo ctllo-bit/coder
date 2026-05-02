@@ -118,7 +118,6 @@ cert: false
 EOF
 
 log_msg "正在创建 systemd 服务文件..."
-CURRENT_USER=$(getent passwd 1000 | cut -d: -f1)
 sudo tee "/etc/systemd/system/code-server.service" > /dev/null <<EOF
 [Unit]
 Description=code-server
@@ -128,7 +127,7 @@ Type=simple
 Restart=always
 ExecStart=/opt/code-server/bin/code-server \
     --config /var/apps/coder/etc/config.yaml \
-    --user-data-dir /var/apps/coder/var/data /home/${CURRENT_USER}/project
+    --user-data-dir /var/apps/coder/var/data
 User=1000
 Group=1001
 [Install]
