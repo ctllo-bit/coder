@@ -125,7 +125,7 @@ Restart=always
 ExecStart=/usr/lib/code-server/bin/code-server \
     --config /var/apps/coder/etc/config.yaml   \
     --user-data-dir /var/apps/coder/var/data   \
-    --socket /run/user/1000/code-server.sock \
+    --socket /var/apps/coder/target/code-server.sock \
     --socket-mode 0600 \
     --disable-telemetry
 
