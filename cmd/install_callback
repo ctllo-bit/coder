@@ -1,6 +1,6 @@
 #!/bin/bash
 LOG_FILE="${TRIM_PKGVAR}/info.log"
-INSTALL_TARGETDIR="/opt/code-server"
+INSTALL_TARGETDIR="/usr/lib/code-server"
 CODER_WORKSPACEDIR="/vol1/1000/VscodeProject"
 
 #获取处理器架构
@@ -96,7 +96,7 @@ tar -xzf code-server-*-linux-${ARCH}.tar.gz || {
     log_msg "解压失败"
     exit 1
 }
-mv code-server-*-linux-${ARCH} code-server 
+mv code-server-*-linux-${ARCH} code-server
 patch_product_json
 # rm code-server-*-linux-${ARCH}.tar.gz
 
@@ -105,15 +105,12 @@ sudo mv code-server "$INSTALL_TARGETDIR" || {
     log_msg "移动文件失败"
     exit 1
 }
-sudo ln -s /opt/code-server/bin/code-server /usr/local/bin/coder
-
+sudo ln -s $INSTALL_TARGETDIR/bin/code-server /usr/local/bin/coder
 
 # 配置code-server文件
 CONFIG_FILE="/var/apps/coder/etc/config.yaml"
 cat > "$CONFIG_FILE" <<EOF
-bind-addr: 0.0.0.0:${wizard_port}
-auth: password
-password: ${wizard_password}
+auth: none
 cert: false
 EOF
 
@@ -125,9 +122,13 @@ After=network.target
 [Service]
 Type=simple
 Restart=always
-ExecStart=/opt/code-server/bin/code-server --socket ${TRIM_APPDEST}/code-server.sock \
-    --config /var/apps/coder/etc/config.yaml \
-    --user-data-dir /var/apps/coder/var/data
+ExecStart=/usr/lib/code-server/bin/code-server \
+    --config /var/apps/coder/etc/config.yaml   \
+    --user-data-dir /var/apps/coder/var/data   \
+    --socket /run/user/1000/code-server.sock \
+    --socket-mode 0600 \
+    --disable-telemetry
+
 User=1000
 Group=1001
 [Install]
