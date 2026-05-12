@@ -122,8 +122,12 @@ After=network.target
 [Service]
 Type=simple
 Restart=always
-ExecStart=/usr/lib/code-server/lib/node ${TRIM_APPDEST}/ui/gateway.js
-
+ExecStart=/usr/lib/code-server/bin/code-server \
+    --config /var/apps/coder/etc/config.yaml   \
+    --user-data-dir /var/apps/coder/var/data   \
+    --socket /var/apps/coder/target/code-server.sock \
+    --socket-mode 0600 \
+    --disable-telemetry
 User=1000
 Group=1001
 [Install]

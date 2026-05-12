@@ -1,21 +1,42 @@
-const http = require('http');
-const fs = require('fs');
+const http = require("http");
+const httpProxy = require("http-proxy");
+const fs = require("fs");
 
-const socketPath = '/var/apps/coder/target/gateway.sock';
+const GATEWAY_SOCKET =
+  "/var/apps/coder/target/gateway.sock";
 
-// 如果文件存在则删除
-if (fs.existsSync(socketPath)) {
-    fs.unlinkSync(socketPath);
+const CODE_SOCKET =
+  "/var/apps/coder/target/code-server.sock";
+
+try {
+  fs.unlinkSync(GATEWAY_SOCKET);
+} catch {}
+
+const proxy = httpProxy.createProxyServer({
+  target: {
+    socketPath: CODE_SOCKET
+  },
+  ws: true
+});
+
+function rewrite(req) {
+  req.url = req.url.replace(/^\/app\/coder(?=\/|$)/, '') || '/';
+
+  console.log(req.method, req.url);
 }
 
 const server = http.createServer((req, res) => {
-    res.writeHead(200);
-    res.end('Hello via Unffdsfdsfdfsdfsddfix Socket');
+  rewrite(req);
+
+  proxy.web(req, res);
 });
 
-// 监听文件路径而非端口
-server.listen(socketPath, () => {
-    // 赋予权限
-    fs.chmodSync(socketPath, '0666');
-    console.log(`Server listening on ${socketPath}`);
+server.on("upgrade", (req, socket, head) => {
+  rewrite(req);
+
+  proxy.ws(req, socket, head);
+});
+
+server.listen(GATEWAY_SOCKET, () => {
+  console.log("gateway listening:", GATEWAY_SOCKET);
 });
