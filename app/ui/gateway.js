@@ -1,17 +1,15 @@
 const http = require("http");
 const httpProxy = require("http-proxy");
-const fs = require("fs");
+const fs = require("fs");//删除旧 socket 文件。
 
-const GATEWAY_SOCKET =
-  "/var/apps/coder/target/gateway.sock";
+const GATEWAY_SOCKET ="/var/apps/coder/target/gateway.sock";
+const CODE_SOCKET ="/var/apps/coder/target/code-server.sock";
 
-const CODE_SOCKET =
-  "/var/apps/coder/target/code-server.sock";
-
-try {
+try {//删除旧 socket
   fs.unlinkSync(GATEWAY_SOCKET);
 } catch {}
 
+//创建代理对象
 const proxy = httpProxy.createProxyServer({
   target: {
     socketPath: CODE_SOCKET
@@ -19,23 +17,16 @@ const proxy = httpProxy.createProxyServer({
   ws: true
 });
 
-function rewrite(req) {
+
+//普通 HTTP 请求处理器,创建 HTTP 服务器。
+const server = http.createServer((req, res) => {
+
   req.url = req.url.replace(/^\/app\/coder(?=\/|$)/, '') || '/';
 
-  console.log(req.method, req.url);
-}
-
-const server = http.createServer((req, res) => {
-  rewrite(req);
-
-  proxy.web(req, res);
+  proxy.web(req, res);//转发 HTTP 请求
 });
 
-server.on("upgrade", (req, socket, head) => {
-  rewrite(req);
 
-  proxy.ws(req, socket, head);
-});
 
 server.listen(GATEWAY_SOCKET, () => {
   console.log("gateway listening:", GATEWAY_SOCKET);
