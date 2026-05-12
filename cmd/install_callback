@@ -126,7 +126,7 @@ ExecStart=/usr/lib/code-server/bin/code-server \
     --config /var/apps/coder/etc/config.yaml   \
     --user-data-dir /var/apps/coder/var/data   \
     --socket /var/apps/coder/target/code-server.sock \
-    --socket-mode 0600 \
+    --socket-mode 0600 --proxy-domain 192.168.2.220:5666 \
     --disable-telemetry
 User=1000
 Group=1001

@@ -15,12 +15,15 @@ start_process() {
         return 0
     fi
 
-    # A. 启动 code-server
+    # A. 启动 code-server (后端)
     log_msg "Starting systemd code-server..."
     systemctl start code-server
 
-    # B. 启动 Rewrite Adapter (Gateway)
-    log_msg "Starting Adapter process..."
+    # 稍微等待后端 Socket 文件生成
+    sleep 1
+
+    # B. 启动 Gateway Proxy (中间层)
+    log_msg "Starting Gateway Proxy..."
     bash -c "${CMD}" >> ${LOG_FILE} 2>&1 &
     printf "%s" "$!" > ${PID_FILE}
     # log_msg "CMD = ${CMD}"
@@ -80,26 +83,21 @@ check_process() {
 }
 
 status() {
-    local adapter_running=1
-    if [ -f "${PID_FILE}" ]; then
-        pid=$(head -n 1 "${PID_FILE}" | tr -d '[:space:]')
-        if check_process "${pid}"; then
-            adapter_running = 0
-        else
-            # Process is not running but pidfile exists - clean it up
-            rm -f "${PID_FILE}"
-        fi    
-    fi
-
-    # 2. 检查 code-server 状态
-    local service_running = systemctl is-active --quiet code-server
-
-    # 只有当两者都正常时，才返回 0 (Success)
-    if [ $adapter_running -eq 0 ] && [ $service_running -eq 0 ]; then
-        return 0
-    else
+    # 检查systemd code-server
+    if ! systemctl is-active --quiet code-server; then
         return 1
     fi
+
+    # 2. 检查 Gateway 进程
+    if [ -f "${PID_FILE}" ]; then
+        local pid=$(head -n 1 "${PID_FILE}" | tr -d '[:space:]')
+        if check_process "${pid}"; then
+            return 0
+        fi
+        rm -f "${PID_FILE}"
+    fi
+
+    return 1
 }
 
 case $1 in
