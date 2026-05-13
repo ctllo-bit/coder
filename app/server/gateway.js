@@ -1,6 +1,7 @@
 const http = require("http");
 const httpProxy = require("http-proxy");
 const fs = require("fs");//删除旧 socket 文件。
+const WebSocket = require('ws');
 
 const BASE_PATH = '/app/coder';
 const GATEWAY_SOCKET ="/var/apps/coder/target/gateway.sock";
@@ -32,22 +33,34 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    // 路径规范化
+    if (pathname === BASE_PATH) {
+        console.log(`[issampro] 重定向: ${pathname} -> ${BASE_PATH}/`);
+        res.writeHead(301, { 'Location': BASE_PATH + '/' });
+        res.end();
+        return;
+    }
+    console.log(`[coder] 收到请求: ${pathname}`);
+
     if (pathname.startsWith(BASE_PATH)) {
-        if (pathname === BASE_PATH) {
-            res.writeHead(301, { 'Location': BASE_PATH + '/' });//如果访问的是 /app/coder 且没带斜杠，强制重定向到带斜杠的版本
-            res.end();
-            return;
-        }
         req.url = pathname.substring(BASE_PATH.length) || '/';
-        console.log(`[issampro] 去掉前缀后路径: ${pathname}`);
+        console.log(`[coder] 去掉前缀后路径: ${ req.url}`);
     }
 
     proxy.web(req, res);//转发 HTTP 到code-server.sock
-    
 });
 
-server.on("upgrade", (req, socket, head) => {
-  proxy.ws(req, socket, head);
+
+
+// 处理 WebSocket (可选)
+const wss = new WebSocket.Server({ noServer: true });
+server.on('upgrade', (request, socket, head) => {
+    console.log(`[WebSocket] 收到升级请求 | 路径: ${request.url}`);
+    wss.handleUpgrade(request, socket, head, (ws) => {
+        console.log(`[WebSocket] 连接成功建立`);
+        wss.emit('connection', ws, request);
+    });
+    proxy.ws(request, socket, head);
 });
 
 // 监听文件路径而非端口

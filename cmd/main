@@ -4,7 +4,7 @@ LOG_FILE="/var/apps/coder/shares/data/info.log"
 PID_FILE="${TRIM_PKGVAR}/app.pid"
 
 # write the command to start your program here 
-CMD="/usr/lib/code-server/lib/node /var/apps/coder/target/ui/gateway.js"
+CMD="/usr/lib/code-server/lib/node /var/apps/coder/target/server/gateway.js"
 
 log_msg() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> ${LOG_FILE}
