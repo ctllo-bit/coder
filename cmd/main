@@ -3,8 +3,10 @@
 LOG_FILE="/var/apps/coder/shares/data/info.log"
 PID_FILE="${TRIM_PKGVAR}/app.pid"
 
+CURRENT_USER=$(getent passwd 1000 | cut -d: -f1)
+
 # write the command to start your program here 
-CMD="/usr/lib/code-server/lib/node /var/apps/coder/target/server/gateway.js"
+CMD="/home/${CURRENT_USER}/code-server/lib/node /var/apps/coder/target/server/gateway.js"
 
 log_msg() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> ${LOG_FILE}

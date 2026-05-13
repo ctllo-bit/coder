@@ -27,7 +27,8 @@ if [ -L "/usr/local/bin/coder" ]; then
 fi
 
 # 删除安装目录
-TARGET_DIR="/usr/lib/code-server"
+CURRENT_USER=$(getent passwd 1000 | cut -d: -f1)
+TARGET_DIR="/home/${CURRENT_USER}"
 if [ -d "$TARGET_DIR" ]; then
     log_msg "删除安装目录 $TARGET_DIR..."
     sudo rm -rf "$TARGET_DIR"
