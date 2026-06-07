@@ -97,8 +97,11 @@ tar -xzf code-server-*-linux-${ARCH}.tar.gz || {
     exit 1
 }
 mv code-server-*-linux-${ARCH} code-server 
-patch_product_json
-# rm code-server-*-linux-${ARCH}.tar.gz
+
+if [ "${wizard_agree_terms}" = "true" ]; then
+    patch_product_json
+fi
+rm code-server-*-linux-${ARCH}.tar.gz
 
 log_msg "解压完成，正在移动文件到：$INSTALL_TARGETDIR..."
 sudo mv code-server "$INSTALL_TARGETDIR" || {
@@ -125,7 +128,7 @@ After=network.target
 [Service]
 Type=simple
 Restart=always
-ExecStart=/opt/code-server/bin/code-server --socket ${TRIM_APPDEST}/code-server.sock \
+ExecStart=/opt/code-server/bin/code-server \
     --config /var/apps/coder/etc/config.yaml \
     --user-data-dir /var/apps/coder/var/data
 User=1000

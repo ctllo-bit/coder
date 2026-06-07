@@ -1,31 +1,13 @@
 [
     {
-        "stepTitle": "欢迎安装",
-        "items": [
-            {
-                "type": "tips",
-                "helpText": "在开始使用前，请确保您知晓并了解相关开源项目协议及条款。"
-            },
-            {
-                "type": "tips",
-                "helpText": "请访问<a target=\"_blank\" href=\"https://github.com/coder/code-server\">Github项目地址</a> 了解项目信息及开源协议。"
-            },
-            {
-                "type": "switch",
-                "field": "agree_terms",
-                "label": "我已知晓并同意遵守上述开源项目相关协议及服务条款",
-                "rules": [
-                    {
-                        "required": true,
-                        "message": "请勾选《我已知晓并同意遵守上述开源项目相关协议及服务条款》"
-                    }
-                ]
-            }
-        ]
-    },
-    {
         "stepTitle": "初始化",
         "items": [
+            {
+                "type": "switch",
+                "field": "wizard_agree_terms",
+                "label": "已阅读并同意服务条款",
+                "rules": []
+            },
 	        {
                 "type": "tips",
                 "helpText": "若使用自定义端口，请修改下面的服务端口"
@@ -57,11 +39,8 @@
                     },
                     {
                         "min": 6,
+                        "max": 64,
                         "message": "密码长度不能少于6位"
-                    },
-                    {
-                        "pattern": "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d_]+$",
-                        "message": "密码必须包含字母和数字"
                     }
                 ]
             }
