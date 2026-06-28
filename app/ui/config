@@ -13,9 +13,10 @@
             "icon": "images/code_icon_{0}.png",
             "type": "url",
             "protocol": "http",
-            "port": "${wizard_port}",
-            "url": "/",
-            "allUsers": false
+            "gatewaySocket": "code-server.sock",
+            "gatewayPrefix": "/app/coder",
+            "url": "/app/coder",
+            "allUsers": true
         }
     }
 }

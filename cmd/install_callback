@@ -3,6 +3,11 @@ LOG_FILE="${TRIM_PKGVAR}/info.log"
 INSTALL_TARGETDIR="/opt/code-server"
 CODER_WORKSPACEDIR="/vol1/1000/VscodeProject"
 
+### This script is called after the user installs the application.
+log_msg() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> ${LOG_FILE}
+}
+
 #获取处理器架构
 ARCH=""
 case "${TRIM_SYS_ARCH}" in
@@ -20,11 +25,6 @@ case "${TRIM_SYS_ARCH}" in
         exit 1
         ;;
 esac
-
-### This script is called after the user installs the application.
-log_msg() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> ${LOG_FILE}
-}
 
 patch_product_json() {
     if ! command -v jq >/dev/null 2>&1; then
@@ -116,7 +116,7 @@ sudo ln -s /opt/code-server/bin/code-server /usr/local/bin/coder
 # 配置code-server文件
 CONFIG_FILE="/var/apps/coder/etc/config.yaml"
 cat > "$CONFIG_FILE" <<EOF
-bind-addr: 0.0.0.0:${wizard_port}
+socket: "/var/apps/coder/target/code-server.sock"
 auth: password
 password: ${wizard_password}
 cert: false
@@ -130,6 +130,7 @@ After=network.target
 [Service]
 Type=simple
 Restart=always
+UMask=0000
 ExecStart=/opt/code-server/bin/code-server \
     --config /var/apps/coder/etc/config.yaml \
     --user-data-dir /var/apps/coder/var/data
