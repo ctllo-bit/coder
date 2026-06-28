@@ -13,9 +13,9 @@
             "icon": "images/code_icon_{0}.png",
             "type": "url",
             "protocol": "http",
-            "gatewaySocket": "code-server.sock",
+            "gatewaySocket": "coder-proxy.sock",
             "gatewayPrefix": "/app/coder",
-            "url": "/app/coder",
+            "url": "/app/coder/",
             "allUsers": true
         }
     }
