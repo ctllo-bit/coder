@@ -3,11 +3,6 @@ LOG_FILE="${TRIM_PKGVAR}/info.log"
 INSTALL_TARGETDIR="/opt/code-server"
 CODER_WORKSPACEDIR="/vol1/1000/VscodeProject"
 
-### This script is called after the user installs the application.
-log_msg() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> ${LOG_FILE}
-}
-
 #获取处理器架构
 ARCH=""
 case "${TRIM_SYS_ARCH}" in
@@ -25,6 +20,11 @@ case "${TRIM_SYS_ARCH}" in
         exit 1
         ;;
 esac
+
+### This script is called after the user installs the application.
+log_msg() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> ${LOG_FILE}
+}
 
 patch_product_json() {
     if ! command -v jq >/dev/null 2>&1; then
@@ -97,11 +97,7 @@ tar -xzf code-server-*-linux-${ARCH}.tar.gz || {
     exit 1
 }
 mv code-server-*-linux-${ARCH} code-server 
-
-if [ "${wizard_agree_terms}" = "true" ]; then
-    patch_product_json
-fi
-# rm code-server-*-linux-${ARCH}.tar.gz
+rm code-server-*-linux-${ARCH}.tar.gz
 
 log_msg "解压完成，正在移动文件到：$INSTALL_TARGETDIR..."
 sudo mv code-server "$INSTALL_TARGETDIR" || {
@@ -109,17 +105,15 @@ sudo mv code-server "$INSTALL_TARGETDIR" || {
     exit 1
 }
 sudo chmod -R a+rX "$INSTALL_TARGETDIR"
-sudo chown -R root:root "$INSTALL_TARGETDIR"
 sudo ln -s /opt/code-server/bin/code-server /usr/local/bin/coder
 
 
 # 配置code-server文件
 CONFIG_FILE="/var/apps/coder/etc/config.yaml"
 cat > "$CONFIG_FILE" <<EOF
+socket: /var/apps/coder/var/code-server.sock
 auth: none
 cert: false
-socket: /var/apps/coder/home/code-server.sock
-extensions-dir: /var/apps/coder/shares/extensions
 EOF
 
 log_msg "正在创建 systemd 服务文件..."
@@ -130,10 +124,9 @@ After=network.target
 [Service]
 Type=simple
 Restart=always
-UMask=0000
 ExecStart=/opt/code-server/bin/code-server \
     --config /var/apps/coder/etc/config.yaml \
-    --user-data-dir /var/apps/coder/home
+    --user-data-dir /var/apps/coder/var/data
 User=1000
 Group=1001
 [Install]
@@ -141,8 +134,8 @@ WantedBy=multi-user.target
 EOF
 
 # 启动服务
-sudo systemctl restart code-server
 sudo systemctl enable code-server
+sudo systemctl start code-server
 
 log_msg "code-server 安装完成。"
 

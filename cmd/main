@@ -4,7 +4,7 @@ LOG_FILE="${TRIM_PKGVAR}/info.log"
 PID_FILE="${TRIM_PKGVAR}/app.pid"
 
 # Socket 文件路径（code-server 依赖此 socket）
-SOCKET_FILE="/var/apps/coder/home/code-server.sock"
+SOCKET_FILE="/var/apps/coder/var/code-server.sock"
 
 # 启动代理的命令
 CMD="cd ${TRIM_APPDEST}/proxy && exec ./coder-proxy-linux-amd64 -socket ${SOCKET_FILE} -prefix /app/coder"
@@ -64,7 +64,7 @@ start_process() {
     # 确保 code-server 已启动
     if ! systemctl is-active --quiet code-server; then
         log_msg "Starting code-server service..."
-        systemctl start code-server
+        sudo systemctl restart code-server
         # 等待 socket 出现
         local count=0
         while [ ! -S "${SOCKET_FILE}" ] && [ $count -lt 10 ]; do
@@ -111,8 +111,7 @@ stop_process() {
         rm -f "${PID_FILE}"
     fi
 
-    # 可选：停止 code-server（根据你的需求决定是否需要）
-    # systemctl stop code-server
+    sudo systemctl stop code-server
 
     return 0
 }
