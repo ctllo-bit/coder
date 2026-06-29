@@ -1,16 +1,131 @@
 #!/bin/bash
 
+LOG_FILE="${TRIM_PKGVAR}/info.log"
+PID_FILE="${TRIM_PKGVAR}/app.pid"
+
+# Socket 文件路径（code-server 依赖此 socket）
+SOCKET_FILE="/var/apps/coder/home/code-server.sock"
+
+# 启动代理的命令
+CMD="cd ${TRIM_APPDEST}/proxy && exec ./coder-proxy-linux-amd64 -socket ${SOCKET_FILE} -prefix /app/coder"
+
+log_msg() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "${LOG_FILE}"
+}
+
+# 检查进程是否存在
+check_process() {
+    local pid=$1
+    if kill -0 "${pid}" 2>/dev/null; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# 改进后的状态检查（同时检查 code-server socket + proxy 进程）
+status() {
+    # 1. 检查 code-server socket 是否存在
+    if [ ! -S "${SOCKET_FILE}" ]; then
+        log_msg "code-server socket does not exist: ${SOCKET_FILE}"
+        return 1
+    fi
+
+    # 2. 检查 code-server systemd 服务是否活跃
+    if ! systemctl is-active --quiet code-server; then
+        log_msg "code-server service is not active"
+        return 1
+    fi
+
+    # 3. 检查 proxy 进程（如果有 pid 文件）
+    if [ -f "${PID_FILE}" ]; then
+        pid=$(head -n 1 "${PID_FILE}" | tr -d '[:space:]')
+        if check_process "${pid}"; then
+            return 0
+        else
+            # 清理无效 pid 文件
+            rm -f "${PID_FILE}"
+            log_msg "Removed stale PID file"
+        fi
+    fi
+
+    log_msg "Proxy process is not running"
+    return 1
+}
+
+start_process() {
+    if status; then
+        log_msg "Service is already running"
+        return 0
+    fi
+
+    log_msg "Starting process ..."
+
+    # 确保 code-server 已启动
+    if ! systemctl is-active --quiet code-server; then
+        log_msg "Starting code-server service..."
+        systemctl start code-server
+        # 等待 socket 出现
+        local count=0
+        while [ ! -S "${SOCKET_FILE}" ] && [ $count -lt 10 ]; do
+            sleep 1
+            count=$((count + 1))
+        done
+        if [ ! -S "${SOCKET_FILE}" ]; then
+            log_msg "Failed to create code-server socket after 10s"
+            return 1
+        fi
+    fi
+
+    # 启动 proxy
+    bash -c "${CMD}" >> "${LOG_FILE}" 2>&1 &
+    printf "%s" "$!" > "${PID_FILE}"
+
+    log_msg "Proxy started with PID $!"
+    return 0
+}
+
+stop_process() {
+    log_msg "Stopping process ..."
+
+    # 停止 proxy
+    if [ -r "${PID_FILE}" ]; then
+        pid=$(head -n 1 "${PID_FILE}" | tr -d '[:space:]')
+        log_msg "Proxy PID=${pid}"
+
+        if check_process "${pid}"; then
+            log_msg "Sending TERM signal to PID:${pid}..."
+            kill -TERM "${pid}" >> "${LOG_FILE}" 2>&1
+
+            local count=0
+            while check_process "${pid}" && [ $count -lt 10 ]; do
+                sleep 1
+                count=$((count + 1))
+            done
+
+            if check_process "${pid}"; then
+                log_msg "Sending KILL signal..."
+                kill -KILL "${pid}"
+            fi
+        fi
+        rm -f "${PID_FILE}"
+    fi
+
+    # 可选：停止 code-server（根据你的需求决定是否需要）
+    # systemctl stop code-server
+
+    return 0
+}
+
 case $1 in
 start)
-    systemctl start code-server
-    exit 0
+    start_process
     ;;
 stop)
-    systemctl stop code-server
-    exit 0
+    stop_process
     ;;
 status)
-    if systemctl is-active --quiet code-server; then
+    if status; then
         exit 0
     else
         exit 3

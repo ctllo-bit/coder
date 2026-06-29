@@ -3,10 +3,6 @@
         "stepTitle": "初始化",
         "items": [
             {
-                "type": "tips",
-                "helpText": "若使用自定义端口，请修改下面的服务端口"
-            },
-            {
                 "type": "switch",
                 "field": "wizard_agree_terms",
                 "label": "已阅读并同意服务条款",
