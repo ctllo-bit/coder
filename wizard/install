@@ -3,46 +3,14 @@
         "stepTitle": "初始化",
         "items": [
             {
-                "type": "switch",
-                "field": "wizard_agree_terms",
-                "label": "已阅读并同意服务条款",
-                "rules": []
-            },
-	        {
                 "type": "tips",
                 "helpText": "若使用自定义端口，请修改下面的服务端口"
             },
             {
-                "type": "text",
-                "field": "wizard_port",
-                "label": "服务端口",
-		        "initValue": "8080",
-                "rules": [
-                    {
-                        "required": true,
-                        "message": "请输入端口号"
-                    },
-                    {
-                        "pattern": "^[0-9]+$",
-                        "message": "端口号必须是数字"
-                    }
-                ]
-            },
-            {
-                "type": "password",
-                "field": "wizard_password",
-                "label": "访问密码",
-                "rules": [
-                    {
-                        "required": true,
-                        "message": "请输入密码"
-                    },
-                    {
-                        "min": 6,
-                        "max": 64,
-                        "message": "密码长度不能少于6位"
-                    }
-                ]
+                "type": "switch",
+                "field": "wizard_agree_terms",
+                "label": "已阅读并同意服务条款",
+                "rules": []
             }
         ]
     }

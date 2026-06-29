@@ -116,10 +116,10 @@ sudo ln -s /opt/code-server/bin/code-server /usr/local/bin/coder
 # 配置code-server文件
 CONFIG_FILE="/var/apps/coder/etc/config.yaml"
 cat > "$CONFIG_FILE" <<EOF
-socket: "/var/apps/coder/target/code-server.sock"
-auth: password
-password: ${wizard_password}
+auth: none
 cert: false
+socket: /var/apps/coder/home/code-server.sock
+extensions-dir: /var/apps/coder/shares/extensions
 EOF
 
 log_msg "正在创建 systemd 服务文件..."
@@ -133,7 +133,7 @@ Restart=always
 UMask=0000
 ExecStart=/opt/code-server/bin/code-server \
     --config /var/apps/coder/etc/config.yaml \
-    --user-data-dir /var/apps/coder/var/data
+    --user-data-dir /var/apps/coder/home
 User=1000
 Group=1001
 [Install]

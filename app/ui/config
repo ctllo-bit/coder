@@ -4,8 +4,10 @@
             "title": "coder 桌面版",
             "icon": "images/icon_{0}.png",
             "type": "iframe",
-            "protocol": "",
-            "url": "/cgi/ThirdParty/coder/index.cgi/",
+            "protocol": "http",
+            "gatewaySocket": "coder-proxy.sock",
+            "gatewayPrefix": "/app/coder",
+            "url": "/app/coder/",
             "allUsers": false
         },
         "coder.Application": {
