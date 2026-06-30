@@ -1,5 +1,5 @@
 #!/bin/bash
-LOG_FILE="${TRIM_PKGVAR}/info.log"
+LOG_FILE="${TRIM_DATA_SHARE_PATHS%%:*}/info.log"
 
 ### This script is called after the user installs the application.
 log_msg() {

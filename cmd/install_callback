@@ -1,5 +1,5 @@
 #!/bin/bash
-LOG_FILE="${TRIM_PKGVAR}/info.log"
+LOG_FILE="${TRIM_DATA_SHARE_PATHS%%:*}/info.log"
 INSTALL_TARGETDIR="/opt/code-server"
 CODER_WORKSPACEDIR="/vol1/1000/VscodeProject"
 
