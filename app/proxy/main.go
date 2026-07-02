@@ -18,10 +18,13 @@ import (
 	"time"
 )
 
+var (
+	codeServerSocket = flag.String("socket", "/var/apps/coder/var/code-server.sock", "upstream code-server unix socket")
+	proxySocket      = flag.String("proxy-socket", "/var/apps/coder/target/coder-proxy.sock", "this proxy's own unix socket")
+	prefix           = flag.String("prefix", "/app/coder", "URL prefix to strip before forwarding")
+)
+
 func main() {
-	codeServerSocket := flag.String("socket", "/var/apps/coder/target/code-server.sock", "upstream code-server unix socket")
-	proxySocket := flag.String("proxy-socket", "/var/apps/coder/target/coder-proxy.sock", "this proxy's own unix socket")
-	prefix := flag.String("prefix", "/app/coder", "URL prefix to strip before forwarding")
 	flag.Parse()
 	overrideEnv(flag.CommandLine)
 
@@ -74,7 +77,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen on proxy socket %s: %v", *proxySocket, err)
 	}
-	if err := os.Chmod(*proxySocket, 0777); err != nil {
+	if err := os.Chmod(*proxySocket, 0666); err != nil {
 		log.Printf("warning: failed to set socket permissions: %v", err)
 	}
 

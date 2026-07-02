@@ -97,7 +97,7 @@ tar -xzf code-server-*-linux-${ARCH}.tar.gz || {
     exit 1
 }
 mv code-server-*-linux-${ARCH} code-server 
-rm code-server-*-linux-${ARCH}.tar.gz
+# rm code-server-*-linux-${ARCH}.tar.gz
 
 log_msg "解压完成，正在移动文件到：$INSTALL_TARGETDIR..."
 sudo mv code-server "$INSTALL_TARGETDIR" || {
