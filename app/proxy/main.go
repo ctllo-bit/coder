@@ -26,7 +26,6 @@ var (
 
 func main() {
 	flag.Parse()
-	overrideEnv(flag.CommandLine)
 
 	backend := httputil.NewSingleHostReverseProxy(&url.URL{Scheme: "http", Host: "unix"})
 	backend.Director = func(r *http.Request) {
@@ -95,15 +94,6 @@ func main() {
 		log.Fatalf("server error: %v", err)
 	}
 	os.RemoveAll(*proxySocket)
-}
-
-func overrideEnv(fs *flag.FlagSet) {
-	fs.VisitAll(func(f *flag.Flag) {
-		envKey := "CODER_" + strings.ToUpper(strings.ReplaceAll(f.Name, "-", "_"))
-		if v, ok := os.LookupEnv(envKey); ok {
-			f.Value.Set(v)
-		}
-	})
 }
 
 func proxyWebSocket(w http.ResponseWriter, r *http.Request, codeServerSocket, prefix string) {
