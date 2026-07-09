@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/http"
 	"net/http/httputil"
-	"net/url"
 	"os"
 	"os/signal"
 	"strings"
@@ -24,47 +23,51 @@ var (
 func main() {
 	flag.Parse()
 
-	backend := httputil.NewSingleHostReverseProxy(&url.URL{Scheme: "http", Host: "unix"})
-	backend.Director = func(r *http.Request) {
-		if strings.HasPrefix(r.URL.Path, *prefix) {
-			r.URL.Path = strings.TrimPrefix(r.URL.Path, *prefix)
-			if !strings.HasPrefix(r.URL.Path, "/") {
-				r.URL.Path = "/" + r.URL.Path
-			}
-		}
-		r.URL.Scheme = "http"
-		r.URL.Host = "unix"
-	}
-	backend.Transport = &http.Transport{
-		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-			var d net.Dialer
-			return d.DialContext(ctx, "unix", *codeServerSocket)
-		},
-		MaxIdleConns:    100,
-		IdleConnTimeout: 90 * time.Second,
-	}
-	backend.ModifyResponse = func(r *http.Response) error {
-		if loc := r.Header.Get("Location"); strings.HasPrefix(loc, "/") && !strings.HasPrefix(loc, *prefix) {
-			r.Header.Set("Location", *prefix+loc)
-		}
-		return nil
-	}
-	backend.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
-		log.Printf("proxy error: %s %s -> %v", r.Method, r.URL.Path, err)
-		if strings.Contains(err.Error(), "connection refused") || strings.Contains(err.Error(), "no such file") {
-			http.Error(w, "code-server is not running or the socket does not exist", http.StatusServiceUnavailable)
-		} else {
-			http.Error(w, "Bad Gateway", http.StatusBadGateway)
-		}
-	}
+	// 不再使用 httputil.NewSingleHostReverseProxy，直接初始化 ReverseProxy 结构体
+	backend := &httputil.ReverseProxy{
+		// ====== 使用 Rewrite 替代 Director ======
+		Rewrite: func(pr *httputil.ProxyRequest) {
+			// 1. 设置目标 Scheme 和 Host
+			pr.Out.URL.Scheme = "http"
+			pr.Out.URL.Host = "unix"
 
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("Upgrade") == "websocket" || strings.Contains(strings.ToLower(r.Header.Get("Connection")), "upgrade") {
-			proxyWebSocket(w, r, *codeServerSocket, *prefix)
-			return
-		}
-		backend.ServeHTTP(w, r)
-	})
+			// 2. 处理路径前缀剥离
+			if strings.HasPrefix(pr.In.URL.Path, *prefix) {
+				pr.Out.URL.Path = strings.TrimPrefix(pr.In.URL.Path, *prefix)
+				if !strings.HasPrefix(pr.Out.URL.Path, "/") {
+					pr.Out.URL.Path = "/" + pr.Out.URL.Path
+				}
+			}
+
+			// 3. 统一处理 WebSocket 和跨域问题（完美替代原有的 proxyWebSocket 逻辑）
+			// 将外部真实的 Host 传递给后端
+			pr.Out.Host = pr.In.Host
+			// 暴力删除 Origin 头，绕过 code-server 严格的同源检测
+			pr.Out.Header.Del("Origin")
+		},
+		Transport: &http.Transport{
+			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+				var d net.Dialer
+				return d.DialContext(ctx, "unix", *codeServerSocket)
+			},
+			MaxIdleConns:    100,
+			IdleConnTimeout: 90 * time.Second,
+		},
+		ModifyResponse: func(r *http.Response) error {
+			if loc := r.Header.Get("Location"); strings.HasPrefix(loc, "/") && !strings.HasPrefix(loc, *prefix) {
+				r.Header.Set("Location", *prefix+loc)
+			}
+			return nil
+		},
+		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
+			log.Printf("proxy error: %s %s -> %v", r.Method, r.URL.Path, err)
+			if strings.Contains(err.Error(), "connection refused") || strings.Contains(err.Error(), "no such file") {
+				http.Error(w, "code-server is not running or the socket does not exist", http.StatusServiceUnavailable)
+			} else {
+				http.Error(w, "Bad Gateway", http.StatusBadGateway)
+			}
+		},
+	}
 
 	if err := os.RemoveAll(*proxySocket); err != nil {
 		log.Fatalf("failed to remove old proxy socket: %v", err)
@@ -77,51 +80,31 @@ func main() {
 		log.Printf("warning: failed to set socket permissions: %v", err)
 	}
 
+	// 优雅停机逻辑
+	server := &http.Server{
+		Handler: backend, // 直接将 backend 作为 Server 的 Handler
+	}
+
 	go func() {
 		sigCh := make(chan os.Signal, 1)
 		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 		<-sigCh
 		log.Println("shutting down proxy...")
-		listener.Close()
+
+		// 给活动连接 5 秒钟时间完成关闭
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := server.Shutdown(ctx); err != nil {
+			log.Printf("proxy shutdown error: %v", err)
+		}
 	}()
 
 	log.Printf("coder proxy listening on %s", *proxySocket)
 	log.Printf("upstream: unix://%s  prefix=%s", *codeServerSocket, *prefix)
-	if err := http.Serve(listener, handler); err != nil && !strings.Contains(err.Error(), "use of closed network connection") {
+
+	// 使用 server.Serve 替代 http.Serve
+	if err := server.Serve(listener); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("server error: %v", err)
 	}
 	os.RemoveAll(*proxySocket)
-}
-
-func proxyWebSocket(w http.ResponseWriter, r *http.Request, codeServerSocket, prefix string) {
-	proxy := &httputil.ReverseProxy{
-		// Director 负责修改发往后端的请求
-		Director: func(req *http.Request) {
-			path := req.URL.Path
-			if strings.HasPrefix(path, prefix) {
-				path = strings.TrimPrefix(path, prefix)
-				if !strings.HasPrefix(path, "/") {
-					path = "/" + path
-				}
-			}
-			req.URL.Scheme = "http"
-			req.URL.Host = "unix"
-			req.URL.Path = path
-
-			// ====== 核心修复点 ======
-			// 让后端 code-server 看到真实的外部 Host
-			req.Host = r.Host
-			// 暴力但最有效的做法：直接删掉 Origin 头，绕过 code-server 严格的同源检测
-			req.Header.Del("Origin")
-		},
-		Transport: &http.Transport{
-			// Transport 负责底层的网络连接，拦截拨号逻辑，强制连接到指定的 unix socket
-			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-				return net.DialTimeout("unix", codeServerSocket, 10*time.Second)
-			},
-		},
-	}
-
-	// 执行代理，它会自动处理 HTTP 和 WebSocket 升级！
-	proxy.ServeHTTP(w, r)
 }
