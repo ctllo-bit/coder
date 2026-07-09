@@ -163,11 +163,11 @@ func proxyWebSocket(w http.ResponseWriter, r *http.Request, codeServerSocket, pr
 
 	done := make(chan struct{}, 2)
 	go func() {
-		io.Copy(conn, clientConn)
+		io.Copy(clientConn, br)
 		done <- struct{}{}
 	}()
 	go func() {
-		io.Copy(clientConn, conn)
+		io.Copy(conn, clientConn)
 		done <- struct{}{}
 	}()
 	<-done
