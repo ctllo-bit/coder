@@ -27,22 +27,22 @@ func main() {
 	backend := &httputil.ReverseProxy{
 		// ====== 使用 Rewrite 替代 Director ======
 		Rewrite: func(pr *httputil.ProxyRequest) {
-			// 1. 设置目标 Scheme 和 Host
-			pr.Out.URL.Scheme = "http"
-			pr.Out.URL.Host = "unix"
-
-			// 2. 处理路径前缀剥离
-			if strings.HasPrefix(pr.In.URL.Path, *prefix) {
-				pr.Out.URL.Path = strings.TrimPrefix(pr.In.URL.Path, *prefix)
-				if !strings.HasPrefix(pr.Out.URL.Path, "/") {
-					pr.Out.URL.Path = "/" + pr.Out.URL.Path
+			// 处理路径前缀剥离
+			path := pr.In.URL.Path
+			if strings.HasPrefix(path, *prefix) {
+				path = strings.TrimPrefix(path, *prefix)
+				if !strings.HasPrefix(path, "/") {
+					path = "/" + path
 				}
 			}
 
-			// 3. 统一处理 WebSocket 和跨域问题（完美替代原有的 proxyWebSocket 逻辑）
+			// 设置目标 Scheme 和 Host
+			pr.Out.URL.Scheme = "http"
+			pr.Out.URL.Host = "unix"
+			pr.Out.URL.Path = path
 			// 将外部真实的 Host 传递给后端
 			pr.Out.Host = pr.In.Host
-			// 暴力删除 Origin 头，绕过 code-server 严格的同源检测
+			// 删除 Origin 头，绕过 code-server 严格的同源检测
 			pr.Out.Header.Del("Origin")
 		},
 		Transport: &http.Transport{
