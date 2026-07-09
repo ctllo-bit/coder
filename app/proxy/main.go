@@ -1,11 +1,8 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"flag"
-	"fmt"
-	"io"
 	"log"
 	"net"
 	"net/http"
@@ -97,78 +94,34 @@ func main() {
 }
 
 func proxyWebSocket(w http.ResponseWriter, r *http.Request, codeServerSocket, prefix string) {
-	path := r.URL.Path
-	if strings.HasPrefix(path, prefix) {
-		path = strings.TrimPrefix(path, prefix)
-		if !strings.HasPrefix(path, "/") {
-			path = "/" + path
-		}
+	proxy := &httputil.ReverseProxy{
+		// Director 负责修改发往后端的请求
+		Director: func(req *http.Request) {
+			path := req.URL.Path
+			if strings.HasPrefix(path, prefix) {
+				path = strings.TrimPrefix(path, prefix)
+				if !strings.HasPrefix(path, "/") {
+					path = "/" + path
+				}
+			}
+			req.URL.Scheme = "http"
+			req.URL.Host = "unix"
+			req.URL.Path = path
+
+			// ====== 核心修复点 ======
+			// 让后端 code-server 看到真实的外部 Host
+			req.Host = r.Host
+			// 暴力但最有效的做法：直接删掉 Origin 头，绕过 code-server 严格的同源检测
+			req.Header.Del("Origin")
+		},
+		Transport: &http.Transport{
+			// Transport 负责底层的网络连接，拦截拨号逻辑，强制连接到指定的 unix socket
+			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+				return net.DialTimeout("unix", codeServerSocket, 10*time.Second)
+			},
+		},
 	}
 
-	conn, err := net.DialTimeout("unix", codeServerSocket, 10*time.Second)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("cannot reach code-server socket: %v", err), http.StatusBadGateway)
-		return
-	}
-	defer conn.Close()
-
-	upgradeReq := fmt.Sprintf("GET %s HTTP/1.1\r\n", path)
-	upgradeReq += "Host: unix\r\n"
-	upgradeReq += "Upgrade: websocket\r\n"
-	upgradeReq += "Connection: Upgrade\r\n"
-	if secKey := r.Header.Get("Sec-WebSocket-Key"); secKey != "" {
-		upgradeReq += fmt.Sprintf("Sec-WebSocket-Key: %s\r\n", secKey)
-	}
-	if secVer := r.Header.Get("Sec-WebSocket-Version"); secVer != "" {
-		upgradeReq += fmt.Sprintf("Sec-WebSocket-Version: %s\r\n", secVer)
-	}
-	if secProto := r.Header.Get("Sec-WebSocket-Protocol"); secProto != "" {
-		upgradeReq += fmt.Sprintf("Sec-WebSocket-Protocol: %s\r\n", secProto)
-	}
-	if secExt := r.Header.Get("Sec-WebSocket-Extensions"); secExt != "" {
-		upgradeReq += fmt.Sprintf("Sec-WebSocket-Extensions: %s\r\n", secExt)
-	}
-	if cookie := r.Header.Get("Cookie"); cookie != "" {
-		upgradeReq += fmt.Sprintf("Cookie: %s\r\n", cookie)
-	}
-	upgradeReq += "\r\n"
-
-	if _, err := conn.Write([]byte(upgradeReq)); err != nil {
-		log.Printf("websocket send upgrade: %v", err)
-		return
-	}
-
-	br := bufio.NewReader(conn)
-	resp, err := http.ReadResponse(br, nil)
-	if err != nil {
-		log.Printf("websocket read response: %v", err)
-		http.Error(w, "upstream error", http.StatusBadGateway)
-		return
-	}
-	defer resp.Body.Close()
-
-	hj, ok := w.(http.Hijacker)
-	if !ok {
-		http.Error(w, "hijacking not supported", http.StatusInternalServerError)
-		return
-	}
-	clientConn, _, err := hj.Hijack()
-	if err != nil {
-		log.Printf("websocket hijack: %v", err)
-		return
-	}
-	defer clientConn.Close()
-
-	resp.Write(clientConn)
-
-	done := make(chan struct{}, 2)
-	go func() {
-		io.Copy(clientConn, br)
-		done <- struct{}{}
-	}()
-	go func() {
-		io.Copy(conn, clientConn)
-		done <- struct{}{}
-	}()
-	<-done
+	// 执行代理，它会自动处理 HTTP 和 WebSocket 升级！
+	proxy.ServeHTTP(w, r)
 }
