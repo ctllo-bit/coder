@@ -27,6 +27,8 @@ func main() {
 	backend := &httputil.ReverseProxy{
 		// ====== 使用 Rewrite 替代 Director ======
 		Rewrite: func(pr *httputil.ProxyRequest) {
+			pr.SetXForwarded() // 自动处理 X-Forwarded-* 头
+
 			// 处理路径前缀剥离
 			path := pr.In.URL.Path
 			if strings.HasPrefix(path, *prefix) {
@@ -42,8 +44,12 @@ func main() {
 			pr.Out.URL.Path = path
 			// 将外部真实的 Host 传递给后端
 			pr.Out.Host = pr.In.Host
-			// 删除 Origin 头，绕过 code-server 严格的同源检测
-			pr.Out.Header.Del("Origin")
+			//当 Origin 为空时：code-server 接收到普通的静态资源请求，不需要也不关心 Origin 校验
+			//当 Origin 不为空时：即触发了 WebSocket 握手或 API 提交，要捕获并将其修正为 perfectOrigin，避免1006的错误
+			if pr.In.Header.Get("Origin") != "" {
+				perfectOrigin := "http://" + pr.In.Host
+				pr.Out.Header.Set("Origin", perfectOrigin)
+			}
 		},
 		Transport: &http.Transport{
 			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
