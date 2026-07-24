@@ -46,7 +46,7 @@ func main() {
 			// 当 Origin 不为空时：触发了 WebSocket 握手或 API 提交
 			if origin := pr.In.Header.Get("Origin"); origin != "" {
 				if u, err := url.Parse(origin); err == nil && u.Host != "" {
-					u.Host = u.Hostname()
+					u.Host = pr.In.Host
 					pr.Out.Header.Set("Origin", u.String())
 				}
 			}

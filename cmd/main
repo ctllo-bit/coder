@@ -3,11 +3,17 @@
 LOG_FILE="${TRIM_DATA_SHARE_PATHS%%:*}/info.log"
 PID_FILE="${TRIM_PKGVAR}/app.pid"
 
+# 根据架构，选二进制文件
+case "${TRIM_SYS_ARCH}" in
+    x86_64|x86)   TARGET_BINARY="./coder-proxy-linux-amd64" ;;
+    aarch64|arm)  TARGET_BINARY="./coder-proxy-linux-arm64" ;;
+    *)            TARGET_BINARY="./coder-proxy-linux-amd64" ;; # 默认 fallback
+esac
 # Socket 文件路径（code-server 依赖此 socket）
 SOCKET_FILE="/var/apps/coder/var/code-server.sock"
 
-# 启动代理的命令
-CMD="cd ${TRIM_APPDEST}/proxy && exec ./coder-proxy-linux-amd64 -socket ${SOCKET_FILE} -prefix /app/coder"
+# 启动的命令
+CMD="cd ${TRIM_APPDEST}/proxy && exec ${TARGET_BINARY} -socket ${SOCKET_FILE} -prefix /app/coder"
 
 log_msg() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "${LOG_FILE}"

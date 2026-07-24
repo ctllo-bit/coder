@@ -133,9 +133,13 @@ Group=1001
 WantedBy=multi-user.target
 EOF
 
+# 覆写配置,让桌面vscode可以remote connect
+echo "AllowTcpForwarding yes" | sudo tee /etc/ssh/sshd_config.d/trim_sshd.conf
+
 # 启动服务
 sudo systemctl enable code-server
 sudo systemctl start code-server
+sudo systemctl restart sshd
 
 log_msg "code-server 安装完成。"
 

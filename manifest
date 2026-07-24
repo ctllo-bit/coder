@@ -1,9 +1,9 @@
 appname               = coder
-version               = 1.0.0
+version               = 1.0.1
 display_name          = coder
-desc                  = `<div>飞牛原生版本，用root适配的coder-server<span>
+desc                  = `<div>原生版本，适配了飞牛统一网关的root版coder-server<span>
 
-实现原理是用Systemd 服务，可以本地化终端，由ctllo-bit适配，工作目录为/vol1/1000/VscodeProject，
+实现原理是用Systemd 服务及golang转发，可以本地化终端，由ctllo-bit适配，工作目录为/vol1/1000/VscodeProject，
 要本地化安装coder-server，则在此目录中上传code-server-*.tar.gz文件，然后安装此fpk即可。
 
 </span></div>`
